@@ -9,8 +9,11 @@ trigger:
       - develop
 
 variables:
-  pythonVersion: "3.11"
-  DATABRICKS_BUNDLE_ENV: dev
+  - group: DATABRICKS_SECRETS
+  - name: pythonVersion
+    value: "3.11"
+  - name: DATABRICKS_BUNDLE_ENV
+    value: dev
 
 stages:
   # -------------------------------------------------------------------
