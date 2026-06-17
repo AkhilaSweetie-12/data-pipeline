@@ -1,0 +1,48 @@
+# =====================================================================
+# Retail DataSecOps - local container stack
+#   docker compose up --build
+#
+# Services:
+#   db       - Azure SQL Edge (SQL Server compatible)
+#   backend  - FastAPI (auto-creates tables + seeds users on startup)
+#   frontend - React build served by nginx
+#
+# URLs:
+#   Frontend  http://localhost:3000
+#   Backend   http://localhost:8000  (docs at /docs)
+# =====================================================================
+services:
+  db:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Str0ng!Passw0rd"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      ENVIRONMENT: dev
+      CORS_ORIGINS: "http://localhost:3000"
+      JWT_SECRET: "compose-dev-secret-change-me"
+      DATABASE_URL: "mssql+pyodbc://sa:Str0ng!Passw0rd@db:1433/master?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=no&TrustServerCertificate=yes"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: "http://localhost:8000"
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

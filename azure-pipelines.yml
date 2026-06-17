@@ -1,0 +1,107 @@
+# =====================================================================
+# Azure DevOps CI/CD - Retail DataSecOps
+# Stages: Validate -> Unit Tests -> Bundle Validate -> Bundle Deploy -> Run Workflow
+# =====================================================================
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  pythonVersion: "3.11"
+  DATABRICKS_BUNDLE_ENV: dev
+
+stages:
+  # -------------------------------------------------------------------
+  - stage: CodeValidation
+    displayName: "Stage 1 - Code Validation"
+    jobs:
+      - job: Lint
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "$(pythonVersion)"
+          - script: |
+              python -m pip install --upgrade pip
+              pip install ruff
+              ruff check backend databricks tests || true
+            displayName: "Ruff lint (non-blocking)"
+
+  # -------------------------------------------------------------------
+  - stage: UnitTests
+    displayName: "Stage 2 - Unit Tests"
+    dependsOn: CodeValidation
+    jobs:
+      - job: Pytest
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "$(pythonVersion)"
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r backend/requirements.txt
+            displayName: "Install backend deps"
+          - script: |
+              cd backend && python -m pytest -q
+            displayName: "Run backend tests"
+          - script: |
+              pip install pytest
+              python -m pytest tests -q
+            displayName: "Run pipeline unit tests"
+
+  # -------------------------------------------------------------------
+  - stage: BundleValidate
+    displayName: "Stage 3 - Databricks Bundle Validate"
+    dependsOn: UnitTests
+    jobs:
+      - job: Validate
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            displayName: "Install Databricks CLI"
+          - script: databricks bundle validate -t $(DATABRICKS_BUNDLE_ENV)
+            displayName: "Bundle validate"
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+
+  # -------------------------------------------------------------------
+  - stage: BundleDeploy
+    displayName: "Stage 4 - Databricks Bundle Deploy"
+    dependsOn: BundleValidate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: Deploy
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            displayName: "Install Databricks CLI"
+          - script: databricks bundle deploy -t $(DATABRICKS_BUNDLE_ENV)
+            displayName: "Bundle deploy"
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+
+  # -------------------------------------------------------------------
+  - stage: RunWorkflow
+    displayName: "Stage 5 - Execute Databricks Workflow"
+    dependsOn: BundleDeploy
+    jobs:
+      - job: Run
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+            displayName: "Install Databricks CLI"
+          - script: databricks bundle run retail_medallion_pipeline -t $(DATABRICKS_BUNDLE_ENV)
+            displayName: "Run medallion pipeline"
+            env:
+              DATABRICKS_HOST: $(DATABRICKS_HOST)
+              DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)

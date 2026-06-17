@@ -1,0 +1,36 @@
+# =====================================================================
+# Databricks Asset Bundle - Retail DataSecOps
+# Deploys notebooks, jobs and the Medallion workflow.
+#   databricks bundle validate -t dev
+#   databricks bundle deploy   -t dev
+#   databricks bundle run retail_medallion_pipeline -t dev
+# =====================================================================
+bundle:
+  name: retail-datasecops
+
+include:
+  - resources/jobs/*.yml
+
+variables:
+  catalog:
+    description: Catalog name (hive_metastore avoids Unity Catalog storage-root requirement)
+    default: hive_metastore
+  secret_scope:
+    description: Key Vault-backed secret scope name
+    default: retail-kv
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405617651135859.19.azuredatabricks.net
+    variables:
+      catalog: hive_metastore
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405617651135859.19.azuredatabricks.net
+    variables:
+      catalog: retail_prod

@@ -1,0 +1,92 @@
+# =====================================================================
+# Databricks Workflow: Medallion pipeline
+# Bronze -> Silver -> Gold -> Quality -> Audit
+# =====================================================================
+resources:
+  jobs:
+    retail_medallion_pipeline:
+      name: "[${bundle.target}] retail_medallion_pipeline"
+
+      job_clusters:
+        - job_cluster_key: medallion_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            # Single-node cluster: only one VM is required, which minimises the
+            # chance of an Azure capacity stockout and fits the 10 vCPU quota.
+            node_type_id: Standard_D4s_v3
+            num_workers: 0
+            data_security_mode: SINGLE_USER
+            spark_conf:
+              spark.databricks.delta.preview.enabled: "true"
+              spark.databricks.cluster.profile: singleNode
+              spark.master: "local[*, 4]"
+            custom_tags:
+              ResourceClass: SingleNode
+
+      tasks:
+        - task_key: bronze_ingestion
+          job_cluster_key: medallion_cluster
+          # Retry the JDBC extract on transient connectivity failures.
+          max_retries: 2
+          min_retry_interval_millis: 30000
+          notebook_task:
+            notebook_path: ../../databricks/bronze/01_bronze_ingestion.py
+            base_parameters:
+              catalog: ${var.catalog}
+              secret_scope: ${var.secret_scope}
+
+        - task_key: silver_transformation
+          depends_on:
+            - task_key: bronze_ingestion
+          job_cluster_key: medallion_cluster
+          notebook_task:
+            notebook_path: ../../databricks/silver/02_silver_transformation.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: gold_transformation
+          depends_on:
+            - task_key: silver_transformation
+          job_cluster_key: medallion_cluster
+          notebook_task:
+            notebook_path: ../../databricks/gold/03_gold_transformation.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: data_quality_validation
+          depends_on:
+            - task_key: gold_transformation
+          job_cluster_key: medallion_cluster
+          notebook_task:
+            notebook_path: ../../databricks/quality/04_data_quality.py
+            base_parameters:
+              catalog: ${var.catalog}
+              fail_on_critical: "true"
+
+        - task_key: audit_report_generation
+          depends_on:
+            - task_key: data_quality_validation
+          job_cluster_key: medallion_cluster
+          notebook_task:
+            notebook_path: ../../databricks/audit/05_audit_report.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+      queue:
+        enabled: true
+
+      # Run automatically every night at 02:00 IST. PAUSED by default so deploys
+      # don't trigger unexpected runs; set to UNPAUSED to activate the schedule.
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: "Asia/Kolkata"
+        pause_status: PAUSED
+
+      # Prevent overlapping runs of the medallion pipeline.
+      max_concurrent_runs: 1
+
+      email_notifications:
+        on_failure:
+          - data-platform-alerts@example.com
+        on_success:
+          - data-platform-alerts@example.com

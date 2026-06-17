@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+.env
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars.local
+
+# Databricks
+.databricks/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

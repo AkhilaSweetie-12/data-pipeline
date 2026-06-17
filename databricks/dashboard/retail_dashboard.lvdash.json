@@ -1,0 +1,118 @@
+{
+  "datasets": [
+    {
+      "name": "ds_daily_revenue",
+      "displayName": "Daily Revenue",
+      "queryLines": [
+        "SELECT order_date, revenue, order_count FROM retail_dev.gold.daily_revenue ORDER BY order_date"
+      ]
+    },
+    {
+      "name": "ds_top_customers",
+      "displayName": "Top Customers",
+      "queryLines": [
+        "SELECT name, total_revenue, order_count FROM retail_dev.gold.customer_sales ORDER BY total_revenue DESC LIMIT 10"
+      ]
+    },
+    {
+      "name": "ds_city_revenue",
+      "displayName": "Revenue by City",
+      "queryLines": [
+        "SELECT city, revenue, order_count FROM retail_dev.gold.city_revenue ORDER BY revenue DESC"
+      ]
+    },
+    {
+      "name": "ds_quality",
+      "displayName": "Data Quality",
+      "queryLines": [
+        "SELECT check_name, entity, status, failed_records, severity FROM retail_dev.gold.data_quality_report ORDER BY status DESC"
+      ]
+    },
+    {
+      "name": "ds_failed_records",
+      "displayName": "Failed / Quarantined Records",
+      "queryLines": [
+        "SELECT 'customers' AS source, COUNT(*) AS failed_records FROM retail_dev.silver.customers_quarantine",
+        "UNION ALL",
+        "SELECT 'orders' AS source, COUNT(*) AS failed_records FROM retail_dev.silver.orders_quarantine"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "retail_overview",
+      "displayName": "Retail Sales Overview",
+      "layout": [
+        {
+          "position": { "x": 0, "y": 0, "width": 6, "height": 6 },
+          "widget": {
+            "name": "w_revenue_trend",
+            "queries": [{ "name": "main", "query": { "datasetName": "ds_daily_revenue",
+              "fields": [{ "name": "order_date", "expression": "`order_date`" },
+                         { "name": "revenue", "expression": "`revenue`" }], "disaggregated": false } }],
+            "spec": { "version": 3, "widgetType": "line",
+              "encodings": { "x": { "fieldName": "order_date", "scale": { "type": "temporal" }, "displayName": "Date" },
+                             "y": { "fieldName": "revenue", "scale": { "type": "quantitative" }, "displayName": "Revenue" } },
+              "frame": { "title": "Revenue Trends", "showTitle": true } }
+          }
+        },
+        {
+          "position": { "x": 6, "y": 0, "width": 6, "height": 6 },
+          "widget": {
+            "name": "w_top_customers",
+            "queries": [{ "name": "main", "query": { "datasetName": "ds_top_customers",
+              "fields": [{ "name": "name", "expression": "`name`" },
+                         { "name": "total_revenue", "expression": "`total_revenue`" }], "disaggregated": false } }],
+            "spec": { "version": 3, "widgetType": "bar",
+              "encodings": { "x": { "fieldName": "total_revenue", "scale": { "type": "quantitative" }, "displayName": "Revenue" },
+                             "y": { "fieldName": "name", "scale": { "type": "categorical" }, "displayName": "Customer" } },
+              "frame": { "title": "Top Customers", "showTitle": true } }
+          }
+        },
+        {
+          "position": { "x": 0, "y": 6, "width": 6, "height": 6 },
+          "widget": {
+            "name": "w_city_revenue",
+            "queries": [{ "name": "main", "query": { "datasetName": "ds_city_revenue",
+              "fields": [{ "name": "city", "expression": "`city`" },
+                         { "name": "revenue", "expression": "`revenue`" }], "disaggregated": false } }],
+            "spec": { "version": 3, "widgetType": "bar",
+              "encodings": { "x": { "fieldName": "city", "scale": { "type": "categorical" }, "displayName": "City" },
+                             "y": { "fieldName": "revenue", "scale": { "type": "quantitative" }, "displayName": "Revenue" } },
+              "frame": { "title": "Revenue by City", "showTitle": true } }
+          }
+        },
+        {
+          "position": { "x": 6, "y": 6, "width": 6, "height": 3 },
+          "widget": {
+            "name": "w_quality",
+            "queries": [{ "name": "main", "query": { "datasetName": "ds_quality",
+              "fields": [{ "name": "check_name", "expression": "`check_name`" },
+                         { "name": "status", "expression": "`status`" },
+                         { "name": "failed_records", "expression": "`failed_records`" }], "disaggregated": true } }],
+            "spec": { "version": 1, "widgetType": "table",
+              "encodings": { "columns": [
+                { "fieldName": "check_name", "displayName": "Check" },
+                { "fieldName": "status", "displayName": "Status" },
+                { "fieldName": "failed_records", "displayName": "Failed" }] },
+              "frame": { "title": "Data Quality Metrics", "showTitle": true } }
+          }
+        },
+        {
+          "position": { "x": 6, "y": 9, "width": 6, "height": 3 },
+          "widget": {
+            "name": "w_failed",
+            "queries": [{ "name": "main", "query": { "datasetName": "ds_failed_records",
+              "fields": [{ "name": "source", "expression": "`source`" },
+                         { "name": "failed_records", "expression": "`failed_records`" }], "disaggregated": true } }],
+            "spec": { "version": 1, "widgetType": "table",
+              "encodings": { "columns": [
+                { "fieldName": "source", "displayName": "Source" },
+                { "fieldName": "failed_records", "displayName": "Failed Records" }] },
+              "frame": { "title": "Failed / Quarantined Records", "showTitle": true } }
+          }
+        }
+      ]
+    }
+  ]
+}

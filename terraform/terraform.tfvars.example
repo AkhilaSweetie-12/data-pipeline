@@ -1,0 +1,4 @@
+prefix             = "retaildsops"
+location           = "eastus"
+sql_admin_username = "sqladmin"
+sql_admin_password = "ChangeMe-Str0ng!Pass"

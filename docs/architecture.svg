@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#455a64"/>
+    </marker>
+    <style>
+      .lane { fill:#ffffff; stroke:#cfd8dc; stroke-width:1.5; rx:12; }
+      .laneTitle { font-size:15px; font-weight:700; fill:#37474f; }
+      .box { rx:10; stroke-width:1.5; }
+      .boxText { font-size:12.5px; fill:#263238; }
+      .small { font-size:11px; fill:#546e7a; }
+      .flow { stroke:#455a64; stroke-width:2; fill:none; marker-end:url(#arrow); }
+      .sec { stroke:#b71c1c; stroke-width:1.6; stroke-dasharray:5 4; fill:none; }
+      .title { font-size:22px; font-weight:800; fill:#102a43; }
+    </style>
+  </defs>
+
+  <text x="40" y="36" class="title">Retail DataSecOps Platform - End-to-End Architecture</text>
+
+  <!-- Lane 1: Frontend -->
+  <rect class="lane" x="30" y="60" width="250" height="600" rx="12"/>
+  <text x="45" y="84" class="laneTitle">Frontend (React + MUI)</text>
+  <rect class="box" x="55" y="100" width="200" height="46" fill="#e3f2fd" stroke="#1565c0"/>
+  <text class="boxText" x="68" y="122">Login (JWT)</text>
+  <text class="small" x="68" y="138">RBAC: admin / engineer / analyst</text>
+  <rect class="box" x="55" y="162" width="200" height="40" fill="#e3f2fd" stroke="#1565c0"/>
+  <text class="boxText" x="68" y="186">Customers (CRUD)</text>
+  <rect class="box" x="55" y="216" width="200" height="40" fill="#e3f2fd" stroke="#1565c0"/>
+  <text class="boxText" x="68" y="240">Orders (CRUD)</text>
+  <rect class="box" x="55" y="270" width="200" height="40" fill="#e3f2fd" stroke="#1565c0"/>
+  <text class="boxText" x="68" y="294">Dashboard (charts)</text>
+  <rect class="box" x="55" y="324" width="200" height="40" fill="#e3f2fd" stroke="#1565c0"/>
+  <text class="boxText" x="68" y="348">Audit Log (admin)</text>
+
+  <!-- Lane 2: Backend + DB -->
+  <rect class="lane" x="310" y="60" width="250" height="600" rx="12"/>
+  <text x="325" y="84" class="laneTitle">Backend (FastAPI)</text>
+  <rect class="box" x="335" y="100" width="200" height="64" fill="#e0f2f1" stroke="#00897b"/>
+  <text class="boxText" x="348" y="122">REST API + Pydantic</text>
+  <text class="small" x="348" y="140">/auth /customers</text>
+  <text class="small" x="348" y="155">/orders /dashboard</text>
+  <rect class="box" x="335" y="180" width="200" height="46" fill="#e0f2f1" stroke="#00897b"/>
+  <text class="boxText" x="348" y="202">JWT Auth + RBAC</text>
+  <text class="small" x="348" y="218">+ persistent audit log</text>
+  <rect class="box" x="335" y="250" width="200" height="60" fill="#ede7f6" stroke="#5e35b1"/>
+  <text class="boxText" x="348" y="274">Azure SQL Database</text>
+  <text class="small" x="348" y="292">customers, orders, users,</text>
+  <text class="small" x="348" y="307">audit_logs</text>
+
+  <!-- Lane 3: Databricks Medallion -->
+  <rect class="lane" x="590" y="60" width="290" height="600" rx="12"/>
+  <text x="605" y="84" class="laneTitle">Azure Databricks (Medallion)</text>
+  <rect class="box" x="615" y="100" width="240" height="58" fill="#fbe9e7" stroke="#d84315"/>
+  <text class="boxText" x="628" y="122">Bronze - raw Delta</text>
+  <text class="small" x="628" y="140">customers_raw, orders_raw (+ ts)</text>
+  <rect class="box" x="615" y="174" width="240" height="74" fill="#fff8e1" stroke="#f9a825"/>
+  <text class="boxText" x="628" y="196">Silver - clean + validate</text>
+  <text class="small" x="628" y="214">dedupe, email/null checks</text>
+  <text class="small" x="628" y="230">+ *_quarantine tables</text>
+  <rect class="box" x="615" y="264" width="240" height="74" fill="#e8f5e9" stroke="#2e7d32"/>
+  <text class="boxText" x="628" y="286">Gold - business metrics</text>
+  <text class="small" x="628" y="304">customer_sales, city_revenue,</text>
+  <text class="small" x="628" y="320">daily_revenue</text>
+  <rect class="box" x="615" y="354" width="240" height="46" fill="#e1f5fe" stroke="#0277bd"/>
+  <text class="boxText" x="628" y="376">Data Quality + Audit</text>
+  <text class="small" x="628" y="392">data_quality_report, audit_log</text>
+  <rect class="box" x="615" y="416" width="240" height="40" fill="#f3e5f5" stroke="#6a1b9a"/>
+  <text class="boxText" x="628" y="440">Workflow: B-&gt;S-&gt;G-&gt;DQ-&gt;Audit</text>
+
+  <!-- Lane 4: Governance + Platform -->
+  <rect class="lane" x="910" y="60" width="240" height="600" rx="12"/>
+  <text x="925" y="84" class="laneTitle">Governance &amp; Platform</text>
+  <rect class="box" x="930" y="100" width="200" height="56" fill="#ffebee" stroke="#c62828"/>
+  <text class="boxText" x="943" y="122">Unity Catalog</text>
+  <text class="small" x="943" y="140">RBAC, row/column security</text>
+  <rect class="box" x="930" y="172" width="200" height="56" fill="#ffebee" stroke="#c62828"/>
+  <text class="boxText" x="943" y="194">PII Masking</text>
+  <text class="small" x="943" y="212">email + phone masks</text>
+  <rect class="box" x="930" y="244" width="200" height="56" fill="#ffebee" stroke="#c62828"/>
+  <text class="boxText" x="943" y="266">Azure Key Vault</text>
+  <text class="small" x="943" y="284">secret scope (no plaintext)</text>
+  <rect class="box" x="930" y="316" width="200" height="50" fill="#eceff1" stroke="#455a64"/>
+  <text class="boxText" x="943" y="338">ADLS Gen2</text>
+  <text class="small" x="943" y="354">bronze/silver/gold containers</text>
+  <rect class="box" x="930" y="382" width="200" height="56" fill="#eceff1" stroke="#455a64"/>
+  <text class="boxText" x="943" y="404">Azure DevOps CI/CD</text>
+  <text class="small" x="943" y="422">validate-&gt;test-&gt;deploy-&gt;run</text>
+  <rect class="box" x="930" y="454" width="200" height="50" fill="#eceff1" stroke="#455a64"/>
+  <text class="boxText" x="943" y="476">Asset Bundle</text>
+  <text class="small" x="943" y="492">databricks.yml (dev/prod)</text>
+
+  <!-- Flows -->
+  <path class="flow" d="M255,240 L335,200"/>
+  <path class="flow" d="M255,292 L335,280"/>
+  <path class="flow" d="M435,310 L435,250" />
+  <path class="flow" d="M535,280 C575,280 575,129 615,129"/>
+  <path class="flow" d="M735,158 L735,174"/>
+  <path class="flow" d="M735,248 L735,264"/>
+  <path class="flow" d="M735,338 L735,354"/>
+
+  <!-- Gold back to dashboard -->
+  <path class="flow" d="M615,300 C420,470 280,420 257,300" />
+  <text class="small" x="300" y="470">Gold metrics -&gt; SQL Dashboard / Power BI</text>
+
+  <!-- Security dashed links -->
+  <path class="sec" d="M930,128 C890,128 880,129 855,129"/>
+  <path class="sec" d="M930,272 C895,300 880,300 855,300"/>
+  <path class="sec" d="M930,210 C895,210 880,211 855,211"/>
+
+  <text x="40" y="700" class="small">Solid arrows = data flow (UI -&gt; API -&gt; SQL -&gt; Bronze -&gt; Silver -&gt; Gold -&gt; Dashboard).  Dashed red = governance/security controls applied to Databricks.</text>
+</svg>
