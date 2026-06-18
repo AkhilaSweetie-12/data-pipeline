@@ -13,7 +13,7 @@ variable "location" {
 variable "sql_location" {
   description = "Azure region for the SQL server (some subscriptions restrict SQL provisioning in certain regions)"
   type        = string
-  default     = "eastus2"
+  default     = "centralindia"
 }
 
 variable "sql_admin_username" {

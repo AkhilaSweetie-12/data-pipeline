@@ -101,6 +101,24 @@ stages:
         pool:
           vmImage: ubuntu-latest
         steps:
+          - script: |
+              echo "##[section]Databricks pipeline triggered"
+              echo "Triggered by : $(Build.RequestedFor)"
+              echo "Branch       : $(Build.SourceBranchName)"
+              echo "Commit       : $(Build.SourceVersion)"
+              echo "Timestamp    : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+              echo "Environment  : $(DATABRICKS_BUNDLE_ENV)"
+            displayName: "Pipeline trigger notification"
+          - script: |
+              if [ -n "$(NOTIFICATION_WEBHOOK_URL)" ]; then
+                curl -s -X POST "$(NOTIFICATION_WEBHOOK_URL)" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"text\":\"Databricks medallion pipeline triggered by $(Build.RequestedFor) on branch $(Build.SourceBranchName) at $(date -u '+%Y-%m-%d %H:%M UTC')\"}"
+                echo "Webhook notification sent."
+              else
+                echo "NOTIFICATION_WEBHOOK_URL not set — skipping webhook."
+              fi
+            displayName: "Send webhook alert (Teams/Slack)"
           - script: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
             displayName: "Install Databricks CLI"
           - script: databricks bundle run retail_medallion_pipeline -t $(DATABRICKS_BUNDLE_ENV)

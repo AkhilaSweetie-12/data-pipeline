@@ -24,13 +24,13 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://adb-7405617651135859.19.azuredatabricks.net
+      host: https://adb-7405605318038039.19.azuredatabricks.net
     variables:
       catalog: hive_metastore
 
   prod:
     mode: production
     workspace:
-      host: https://adb-7405617651135859.19.azuredatabricks.net
+      host: https://adb-7405605318038039.19.azuredatabricks.net
     variables:
       catalog: retail_prod
