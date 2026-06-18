@@ -126,3 +126,52 @@ stages:
             env:
               DATABRICKS_HOST: $(DATABRICKS_HOST)
               DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+
+          - script: |
+              echo "Pipeline FAILED — creating Bug work item in Azure DevOps Boards..."
+              TITLE="[AUTO-INCIDENT] Databricks pipeline failed — Build $(Build.BuildNumber)"
+              BODY="[
+                {\"op\":\"add\",\"path\":\"/fields/System.Title\",\"value\":\"${TITLE}\"},
+                {\"op\":\"add\",\"path\":\"/fields/System.Description\",\"value\":\"Branch: $(Build.SourceBranchName)<br>Commit: $(Build.SourceVersion)<br>Triggered by: $(Build.RequestedFor)<br>Build URL: $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)\"},
+                {\"op\":\"add\",\"path\":\"/fields/Microsoft.VSTS.Common.Priority\",\"value\":\"1\"},
+                {\"op\":\"add\",\"path\":\"/fields/System.Tags\",\"value\":\"auto-incident; databricks; pipeline\"}
+              ]"
+              curl -s -X POST \
+                "$(System.CollectionUri)$(System.TeamProject)/_apis/wit/workitems/\$Bug?api-version=7.1" \
+                -H "Authorization: Bearer $(System.AccessToken)" \
+                -H "Content-Type: application/json-patch+json" \
+                -d "$BODY"
+              echo "Bug work item created."
+            displayName: "Create Bug work item on failure"
+            condition: failed()
+
+          - script: |
+              if [ -n "$(NOTIFICATION_WEBHOOK_URL)" ]; then
+                curl -s -X POST "$(NOTIFICATION_WEBHOOK_URL)" \
+                  -H "Content-Type: application/json" \
+                  -d "{
+                    \"@type\": \"MessageCard\",
+                    \"@context\": \"http://schema.org/extensions\",
+                    \"themeColor\": \"FF0000\",
+                    \"summary\": \"Databricks pipeline FAILED\",
+                    \"sections\": [{
+                      \"activityTitle\": \"Databricks Medallion Pipeline FAILED\",
+                      \"activitySubtitle\": \"Build $(Build.BuildNumber) on branch $(Build.SourceBranchName)\",
+                      \"facts\": [
+                        {\"name\": \"Triggered by\", \"value\": \"$(Build.RequestedFor)\"},
+                        {\"name\": \"Commit\", \"value\": \"$(Build.SourceVersion)\"},
+                        {\"name\": \"Environment\", \"value\": \"$(DATABRICKS_BUNDLE_ENV)\"},
+                        {\"name\": \"Time\", \"value\": \"$(date -u '+%Y-%m-%d %H:%M UTC')\"}
+                      ],
+                      \"markdown\": true
+                    }],
+                    \"potentialAction\": [{
+                      \"@type\": \"OpenUri\",
+                      \"name\": \"View Build\",
+                      \"targets\": [{\"os\": \"default\", \"uri\": \"$(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)\"}]
+                    }]
+                  }"
+                echo "Failure alert sent to Teams."
+              fi
+            displayName: "Send Teams failure incident card"
+            condition: failed()

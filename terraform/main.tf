@@ -128,3 +128,84 @@ resource "azurerm_databricks_workspace" "dbx" {
   location            = azurerm_resource_group.rg.location
   sku                 = "premium" # required for Unity Catalog & RBAC
 }
+
+# ---------------- Azure Monitor: Action Group ----------------
+resource "azurerm_monitor_action_group" "alerts" {
+  name                = "${var.prefix}-incident-ag"
+  resource_group_name = azurerm_resource_group.rg.name
+  short_name          = "incidents"
+
+  email_receiver {
+    name          = "platform-owner"
+    email_address = var.alert_email
+  }
+}
+
+# ---------------- Azure Monitor: SQL DTU alert ----------------
+resource "azurerm_monitor_metric_alert" "sql_dtu" {
+  name                = "${var.prefix}-sql-dtu-high"
+  resource_group_name = azurerm_resource_group.rg.name
+  scopes              = [azurerm_mssql_database.db.id]
+  description         = "Alert when SQL database DTU consumption exceeds 80%"
+  severity            = 2
+  frequency           = "PT5M"
+  window_size         = "PT15M"
+
+  criteria {
+    metric_namespace = "Microsoft.Sql/servers/databases"
+    metric_name      = "dtu_consumption_percent"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.alerts.id
+  }
+}
+
+# ---------------- Azure Monitor: SQL connection failures alert ----
+resource "azurerm_monitor_metric_alert" "sql_connections" {
+  name                = "${var.prefix}-sql-failed-connections"
+  resource_group_name = azurerm_resource_group.rg.name
+  scopes              = [azurerm_mssql_database.db.id]
+  description         = "Alert on SQL connection failures (pipeline JDBC errors)"
+  severity            = 1
+  frequency           = "PT5M"
+  window_size         = "PT15M"
+
+  criteria {
+    metric_namespace = "Microsoft.Sql/servers/databases"
+    metric_name      = "connection_failed"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 5
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.alerts.id
+  }
+}
+
+# ---------------- Azure Monitor: Storage availability alert ------
+resource "azurerm_monitor_metric_alert" "adls_availability" {
+  name                = "${var.prefix}-adls-availability"
+  resource_group_name = azurerm_resource_group.rg.name
+  scopes              = [azurerm_storage_account.adls.id]
+  description         = "Alert when ADLS Gen2 availability drops below 99%"
+  severity            = 1
+  frequency           = "PT5M"
+  window_size         = "PT15M"
+
+  criteria {
+    metric_namespace = "Microsoft.Storage/storageAccounts"
+    metric_name      = "Availability"
+    aggregation      = "Average"
+    operator         = "LessThan"
+    threshold        = 99
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.alerts.id
+  }
+}

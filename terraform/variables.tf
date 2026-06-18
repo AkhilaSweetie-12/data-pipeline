@@ -16,6 +16,12 @@ variable "sql_location" {
   default     = "centralindia"
 }
 
+variable "alert_email" {
+  description = "Email address for Azure Monitor incident alerts"
+  type        = string
+  default     = "akhila.pemmaraju@kanini.com"
+}
+
 variable "sql_admin_username" {
   description = "Azure SQL administrator login"
   type        = string

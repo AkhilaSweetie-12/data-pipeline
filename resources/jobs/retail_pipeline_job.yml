@@ -81,6 +81,19 @@ resources:
             base_parameters:
               catalog: ${var.catalog}
 
+        - task_key: incident_logger
+          # Runs regardless of whether upstream tasks succeeded or failed.
+          run_if: ALL_DONE
+          depends_on:
+            - task_key: predictive_maintenance
+            - task_key: data_quality_validation
+            - task_key: audit_report_generation
+          job_cluster_key: medallion_cluster
+          notebook_task:
+            notebook_path: ../../databricks/monitoring/07_incident_logger.py
+            base_parameters:
+              catalog: ${var.catalog}
+
       queue:
         enabled: true
 
